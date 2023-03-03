@@ -10,118 +10,125 @@
     <h1>
         Premier test.
     </h1>
+    <div id="svg-node"></div>
     <script src="https://d3js.org/d3.v5.min.js"></script>
     <script>
-        {
+        
         const full_data_path = "https://raw.githubusercontent.com/TAHTAH98/impact_environnemental_production_agricole_francaise/main/data/finalgeo_1.csv"
         const france_map_path = "https://raw.githubusercontent.com/TAHTAH98/impact_environnemental_production_agricole_francaise/main/data/metropole-version-simplifiee.geojson"
         const width = 700
         const height = 580
 
         fetch(france_map_path)
-        .then(res => res.json())
-        .then(json => console.log(json));
+            .then(res => res.json())
+            .then(json => {
+                fetch(full_data_path)
+                .then(res => res)
+                .then(csv => {
+                    console.log(csv)
+                    full_data = [0, 1]
+                    const svg = d3.create("svg")
+                    svg.attr("width", width)
+                        .attr("height", height)
 
-        /* const svg = d3.create("svg")
-        svg.attr("width", width)
-        .attr("height", height)
+                    const g = svg.append("g")
 
-        const g = svg.append("g")
+                    var color = d3
+                        .scaleLinear()
+                        .range(["#edf8e9", "#006d2c"]);
 
-        var color = d3
-        .scaleLinear()
-        .range(["#edf8e9", "#006d2c"]);
+                    var projection = d3.geoConicConformal()
+                        .center([2.454071, 46.279229])
+                        .scale(2800)
 
-        var projection = d3.geoConicConformal()
-        .center([2.454071, 46.279229])
-        .scale(2800)
+                    var path = d3.geoPath().projection(projection)
 
-        var path = d3.geoPath().projection(projection)
+                    color.domain([
+                        d3.min(full_data, function (d) {
+                        return d.surface;
+                        }),
+                        d3.max(full_data, function (d) {
+                        return d.surface;
+                        })
+                    ]);
 
-        color.domain([
-            d3.min(full_data, function (d) {
-            return d.surface;
-            }),
-            d3.max(full_data, function (d) {
-            return d.surface;
-            })
-            ]);
+                    g.selectAll(".map")
+                        .data([json.geometry])
+                        .join("path")
+                        .attr("d", path)
+                        .style("fill", function (d) {
+                                    //on prend la valeur recupere plus haut
+                                        // si pas de valeur alors en gris
+                                        return "#000";})
+                        .style("stroke", "#ccc")
 
-        $.getJSON(){g.selectAll(".map")
-        .data([json.geometry])
-        .join("path")
-        .attr("d", path)
-        .style("fill", function (d) {
-                    //on prend la valeur recupere plus haut
-                        // si pas de valeur alors en gris
-                        return "#000";})
-        .style("stroke", "#ccc")}
+                    // g.selectAll(".production-plots")
+                    //     .data(full_data)
+                    //     .join("circle")
+                    //     .attr("cx", d => projection(d.lat, d.lon)[0])
+                    //     .attr("cy", d => projection(d.lat, d.lon)[1])
+                    //     .attr("r", d =>  {
+                    //         var delta_lat = Math.sqrt((d.surface / Math.PI)) / 1105.74;
+                    //         var center = projection(d.lat, d.lon)
+                    //         var side = projection(d.lat - delta_lat, d.lon)
+                    //         return Math.abs(center[0] - side[0])
+                    //     })
+                    //     .style("fill", function (d) {
+                    //             //on prend la valeur recupere plus haut
+                    //             var value = d.value;
 
-        g.selectAll(".production-plots")
-        .data(full_data)
-        .join("circle")
-        .attr("cx", d => projection(d.lat, d.lon)[0])
-        .attr("cy", d => projection(d.lat, d.lon)[1])
-        .attr("r", d =>  {
-            var delta_lat = Math.sqrt((d.surface / Math.PI)) / 1105.74;
-            var center = projection(d.lat, d.lon)
-            var side = projection(d.lat - delta_lat, d.lon)
-            return Math.abs(center[0] - side[0])
-        })
-        .style("fill", function (d) {
-                //on prend la valeur recupere plus haut
-                var value = d.value;
+                    //             if (value) {
+                    //             return color(value);
+                    //             } else {
+                    //             // si pas de valeur alors en noir
+                    //             return "#ff0000";
+                    //             }
+                    //         })
+                    //     .style("stroke", function (d) {
+                    //             //on prend la valeur recupere plus haut
+                    //             var value = d.value;
 
-                if (value) {
-                return color(value);
-                } else {
-                // si pas de valeur alors en noir
-                return "#ff0000";
-                }
-            })
-        .style("stroke", function (d) {
-                //on prend la valeur recupere plus haut
-                var value = d.value;
+                    //             if (value) {
+                    //             return color(value);
+                    //             } else {
+                    //             // si pas de valeur alors en noir
+                    //             return "#ff0000";
+                    //             }
+                    //         })
+                    
 
-                if (value) {
-                return color(value);
-                } else {
-                // si pas de valeur alors en noir
-                return "#ff0000";
-                }
-            })
-        
+                    // g.selectAll(".plots")
+                    // .data(full_data)
+                    // .join("path")
+                    // .attr("d", path)
+                    // .style("fill", function (d) {
+                    //       //on prend la valeur recupere plus haut
+                    //       var value = d.surface;
 
-        // g.selectAll(".plots")
-        // .data(full_data)
-        // .join("path")
-        // .attr("d", path)
-        // .style("fill", function (d) {
-        //       //on prend la valeur recupere plus haut
-        //       var value = d.surface;
+                    //       if (value) {
+                    //         return color(value);
+                    //       } else {
+                    //         // si pas de valeur alors en noir
+                    //         return "#ff0000";
+                    //       }
+                    //     })
+                    // .style("stroke", function (d) {
+                    //       //on prend la valeur recupere plus haut
+                    //       var value = d.surface;
 
-        //       if (value) {
-        //         return color(value);
-        //       } else {
-        //         // si pas de valeur alors en noir
-        //         return "#ff0000";
-        //       }
-        //     })
-        // .style("stroke", function (d) {
-        //       //on prend la valeur recupere plus haut
-        //       var value = d.surface;
-
-        //       if (value) {
-        //         return color(value);
-        //       } else {
-        //         // si pas de valeur alors en noir
-        //         return "#ff0000";
-        //       }
-        //     })
-        
-        return svg.node()
-        } */
-    }
+                    //       if (value) {
+                    //         return color(value);
+                    //       } else {
+                    //         // si pas de valeur alors en noir
+                    //         return "#ff0000";
+                    //       }
+                    //     })
+                    
+                    //return svg.node()
+                    console.log(svg.node())
+                    document.getElementById("svg-node").innerHTML = svg.node().outerHTML;
+                })
+            });
     </script>
 </body>
 </html>
