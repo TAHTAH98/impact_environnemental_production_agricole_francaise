@@ -14,24 +14,40 @@
     <script src="https://d3js.org/d3.v5.min.js"></script>
     <script>
         
-        const full_data_path = "https://raw.githubusercontent.com/TAHTAH98/impact_environnemental_production_agricole_francaise/main/data/reduced_data.csv"
+        const full_data_path = "https://raw.githubusercontent.com/TAHTAH98/impact_environnemental_production_agricole_francaise/main/data/reduced_data_{}.csv"
         const france_map_path = "https://raw.githubusercontent.com/TAHTAH98/impact_environnemental_production_agricole_francaise/main/data/metropole-version-simplifiee.geojson"
         const width = 700
-        const height = 580
+        const height = 580 
 
         fetch(france_map_path)
             .then(res => res.json())
             .then(json => {
-                fetch(full_data_path)
+                const svg = d3.create("svg")
+                svg.attr("width", width)
+                    .attr("height", height)
+                const g = svg.append("g")
+
+                var projection = d3.geoConicConformal()
+                    .center([2.454071, 46.279229])
+                    .scale(2800)
+
+                var path = d3.geoPath().projection(projection)
+
+                g.selectAll(".map")
+                    .data([json.geometry])
+                    .join("path")
+                    .attr("d", path)
+                    .style("fill", function (d) {
+                                //on prend la valeur recupere plus haut
+                                    // si pas de valeur alors en gris
+                                    return "#000";})
+                    .style("stroke", "#ccc")
+            
+                for (let i=0; i<10; i++) {
+                fetch(full_data_path.replace(/{}/g, (i).toString()))
                 .then(res => res.text())
                 .then(data => {
                     full_data = d3.csvParse(data);
-                    const svg = d3.create("svg")
-                    svg.attr("width", width)
-                        .attr("height", height)
-
-                    const g = svg.append("g")
-
                     var color = d3
                         .scaleLinear()
                         .range(["#edf8e9", "#006d2c"])
@@ -45,24 +61,7 @@
                         ])
                         .clamp(true);
 
-                    var projection = d3.geoConicConformal()
-                        .center([2.454071, 46.279229])
-                        .scale(2800)
-
-                    var path = d3.geoPath().projection(projection)
-
-
-                    g.selectAll(".map")
-                        .data([json.geometry])
-                        .join("path")
-                        .attr("d", path)
-                        .style("fill", function (d) {
-                                    //on prend la valeur recupere plus haut
-                                        // si pas de valeur alors en gris
-                                        return "#000";})
-                        .style("stroke", "#ccc")
-
-                    g.selectAll(".production-plots")
+                    g.selectAll(".production-plots-" + (i).toString())
                         .data(full_data)
                         .join("circle")
                         .attr("cx", d => projection([d.lon, d.lat])[0])
@@ -125,11 +124,11 @@
                     //       }
                     //     })
                     
-                    //return svg.node()
-                    console.log(svg.node())
                     document.getElementById("svg-node").innerHTML = svg.node().outerHTML;
                 })
-            });
+            }}
+            )
+        ;
     </script>
 </body>
 </html>
