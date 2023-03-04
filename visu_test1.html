@@ -16,6 +16,7 @@
         
         const full_data_path = "https://raw.githubusercontent.com/TAHTAH98/impact_environnemental_production_agricole_francaise/main/data/reduced_data_{}.csv"
         const france_map_path = "https://raw.githubusercontent.com/TAHTAH98/impact_environnemental_production_agricole_francaise/main/data/metropole-version-simplifiee.geojson"
+        const aggregated_data_path = "https://raw.githubusercontent.com/TAHTAH98/impact_environnemental_production_agricole_francaise/main/data/regions_aggregees.json"
         const width = 700
         const height = 580 
 
@@ -33,100 +34,109 @@
 
                 var path = d3.geoPath().projection(projection)
 
-                g.selectAll(".map")
-                    .data([json.geometry])
-                    .join("path")
-                    .attr("d", path)
-                    .style("fill", function (d) {
-                                //on prend la valeur recupere plus haut
-                                    // si pas de valeur alors en gris
-                                    return "#000";})
-                    .style("stroke", "#ccc")
-            
-                for (let i=0; i<10; i++) {
-                fetch(full_data_path.replace(/{}/g, (i).toString()))
-                .then(res => res.text())
-                .then(data => {
-                    full_data = d3.csvParse(data);
-                    var color = d3
-                        .scaleLinear()
-                        .range(["#edf8e9", "#006d2c"])
-                        .domain([
-                            d3.min(full_data, function (d) {
-                                return d.value;
-                            }),
-                                d3.max(full_data, function (d) {
-                            return d.value;
-                            })
-                        ])
-                        .clamp(true);
+                fetch(aggregated_data_path)
+                    .then(res => res.json())
+                    .then(json_aggregated => {
+                        const dataArray = d3.entries(json_aggregated);
 
-                    g.selectAll(".production-plots-" + (i).toString())
-                        .data(full_data)
-                        .join("circle")
-                        .attr("cx", d => projection([d.lon, d.lat])[0])
-                        .attr("cy", d => projection([d.lon, d.lat])[1])
-                        .attr("r", d =>  {
-                            // var delta_lat = Math.sqrt((d.surface / Math.PI)) / 1105.74;
-                            // var center = projection(d.lat, d.lon)
-                            // var side = projection(d.lat - delta_lat, d.lon)
-                            // return Math.abs(center[0] - side[0])
-                            return 0.5;
-                        })
-                        .style("fill", function (d) {
-                                //on prend la valeur recupere plus haut
-                                var value = d.value;
+                        const minValueObject = d3.min(dataArray, d => d.value[0]);
+                        const maxValueObject = d3.max(dataArray, d => d.value[0]);
+                        var color_aggregated = d3
+                            .scaleLinear()
+                            .range(["#edf8e9", "#006d2c"])
+                            .domain([minValueObject, maxValueObject])
+                            .clamp(true);
 
-                                if (value) {
-                                return color(value);
-                                } else {
-                                // si pas de valeur alors en gris
-                                return "#eee";
+                        //On fusionne les donnees avec le GeoJSON
+                        for (let region in json_aggregated) {
+
+                            //Valeur associee a l'etat
+                            var dataValue = parseFloat(json_aggregated[region][0]);
+
+                            //Recherche de l'etat dans le GeoJSON
+                            for (var j = 0; j < json.features.length; j++) {
+                                var jsonState = json.features[j].properties.nom;
+                                if (region == jsonState) {
+                                    //On injecte la valeur de l'Etat dans le json
+                                    json.features[j].properties.value = dataValue;
+
+                                    //Pas besoin de chercher plus loin
+                                break;
                                 }
+                            }
+                            }
+
+                        g.selectAll(".map")
+                            .data(json.features)
+                            .join("path")
+                            .attr("d", path)
+                            .style("fill", function (d) {
+                                        //on prend la valeur recupere plus haut
+                                var value = d.properties.value;
+                                return color_aggregated(value);
                             })
-                        .style("stroke", function (d) {
-                                //on prend la valeur recupere plus haut
-                                var value = d.value;
-
-                                if (value) {
-                                return color(value);
-                                } else {
-                                // si pas de valeur alors en gris
-                                return "#eee";
-                                }
-                            })
+                            .style("stroke", "#ccc")
                     
+                        // for (let i=0; i<10; i++) {
+                        // fetch(full_data_path.replace(/{}/g, (i).toString()))
+                        //     .then(res => res.text())
+                        //     .then(data => {
+                        //         full_data = d3.csvParse(data);
+                        //         var color = d3
+                        //             .scaleLinear()
+                        //             .range(["#edf8e9", "#006d2c"])
+                        //             .domain([
+                        //                 d3.min(full_data, function (d) {
+                        //                     return d.value;
+                        //                 }),
+                        //                     d3.max(full_data, function (d) {
+                        //                 return d.value;
+                        //                 })
+                        //             ])
+                        //             .clamp(true);
 
-                    // g.selectAll(".plots")
-                    // .data(full_data)
-                    // .join("path")
-                    // .attr("d", path)
-                    // .style("fill", function (d) {
-                    //       //on prend la valeur recupere plus haut
-                    //       var value = d.surface;
+                        //         g.selectAll(".production-plots-" + (i).toString())
+                        //             .data(full_data)
+                        //             .join("circle")
+                        //             .attr("cx", d => projection([d.lon, d.lat])[0])
+                        //             .attr("cy", d => projection([d.lon, d.lat])[1])
+                        //             .attr("r", d =>  {
+                        //                 // var delta_lat = Math.sqrt((d.surface / Math.PI)) / 1105.74;
+                        //                 // var center = projection(d.lat, d.lon)
+                        //                 // var side = projection(d.lat - delta_lat, d.lon)
+                        //                 // return Math.abs(center[0] - side[0])
+                        //                 return 0.5;
+                        //             })
+                        //             .style("fill", function (d) {
+                        //                     //on prend la valeur recupere plus haut
+                        //                     var value = d.value;
 
-                    //       if (value) {
-                    //         return color(value);
-                    //       } else {
-                    //         // si pas de valeur alors en noir
-                    //         return "#ff0000";
-                    //       }
-                    //     })
-                    // .style("stroke", function (d) {
-                    //       //on prend la valeur recupere plus haut
-                    //       var value = d.surface;
+                        //                     if (value) {
+                        //                     return color(value);
+                        //                     } else {
+                        //                     // si pas de valeur alors en gris
+                        //                     return "#eee";
+                        //                     }
+                        //                 })
+                        //             .style("stroke", function (d) {
+                        //                     //on prend la valeur recupere plus haut
+                        //                     var value = d.value;
 
-                    //       if (value) {
-                    //         return color(value);
-                    //       } else {
-                    //         // si pas de valeur alors en noir
-                    //         return "#ff0000";
-                    //       }
-                    //     })
-                    
-                    document.getElementById("svg-node").innerHTML = svg.node().outerHTML;
-                })
-            }}
+                        //                     if (value) {
+                        //                     return color(value);
+                        //                     } else {
+                        //                     // si pas de valeur alors en gris
+                        //                     return "#eee";
+                        //                     }
+                        //                 })
+                                
+                                
+                        //         document.getElementById("svg-node").innerHTML = svg.node().outerHTML;
+                        //     })
+                        // }
+                        document.getElementById("svg-node").innerHTML = svg.node().outerHTML;
+                    })
+                }
             )
         ;
     </script>
